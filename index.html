@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alamo Grades Browser</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>Alamo Grades Browser</h1>
+    <p>Scan trading card game cards with your camera or upload a photo. The app uses browser OCR to read card text and help identify card names.</p>
+
+    <section class="controls">
+      <button id="start-camera">Start Camera</button>
+      <button id="capture-card" disabled>Capture Card</button>
+      <label class="upload-button">
+        Upload Image
+        <input id="upload-image" type="file" accept="image/*" />
+      </label>
+    </section>
+
+    <section class="preview">
+      <div class="video-frame">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="overlay"></div>
+      </div>
+      <canvas id="canvas" hidden></canvas>
+    </section>
+
+    <section class="results">
+      <h2>Scan Results</h2>
+      <div class="card-info">
+        <div>
+          <strong>Detected text:</strong>
+          <pre id="ocr-result">No scan yet.</pre>
+        </div>
+        <div id="card-name" class="card-name"></div>
+      </div>
+      <div id="status" class="status">Ready to scan.</div>
+      <div class="search-links" id="search-links"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
+  <script src="cards.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
