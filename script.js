@@ -139,7 +139,7 @@ async function recognizeCardImage(image) {
     return '';
   }
 }
-// --- FINAL OCR FUNCTION (waits for image load) ---
+// --- FINAL OCR FUNCTION (Steam Deck compatible) ---
 async function runOCR(file) {
   console.log("Starting OCR…");
 
@@ -148,16 +148,19 @@ async function runOCR(file) {
   let imageSource;
 
   if (typeof file === "string" && file.startsWith("data:image")) {
+    // Create an image element and wait for it to load
     imageSource = new Image();
     imageSource.src = file;
 
-    // Wait until the image is fully loaded
     await new Promise((resolve, reject) => {
       imageSource.onload = resolve;
       imageSource.onerror = reject;
     });
+  } else if (file instanceof Blob) {
+    // Convert Blob to object URL
+    imageSource = URL.createObjectURL(file);
   } else {
-    imageSource = file;
+    throw new Error("Unsupported file type for OCR.");
   }
 
   const { data: { text } } = await worker.recognize(imageSource);
@@ -169,6 +172,7 @@ async function runOCR(file) {
 
   return text;
 }
+
 
 function getCaptureRegion() {
   const videoRect = video.getBoundingClientRect();
