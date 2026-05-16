@@ -281,38 +281,50 @@ async function handleUpload(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = async () => {
-    setStatus('Recognizing text from uploaded image...');
-    const text = await runOCR(reader.result);
+
+  reader.onload = async (e) => {
+    const imageData = e.target.result;
+
+    // Debug logs so we can see what’s happening
+    console.log("Image data length:", imageData?.length);
+    console.log("Image data prefix:", imageData?.substring(0, 50));
+
+    setStatus("Recognizing text from uploaded image...");
+
+    const text = await runOCR(imageData);
+
     if (!text) {
-      ocrResult.textContent = 'No text detected in the uploaded image.';
-      cardNameElement.textContent = '';
-      updateSearchLinks('');
+      ocrResult.textContent = "No text detected in the uploaded image.";
+      cardNameElement.textContent = "";
+      updateSearchLinks("");
       return;
     }
 
     ocrResult.textContent = text;
+
     const cardName = extractCardName(text);
     if (cardName) {
       const matchedCard = findCardMatch(cardName);
       if (matchedCard) {
-        cardNameElement.innerHTML = `Card matched from Spider-Man set: <strong>${matchedCard.name}</strong><br />` +
+        cardNameElement.innerHTML =
+          `Card matched from Spider-Man set: <strong>${matchedCard.name}</strong><br />` +
           `Type: ${matchedCard.type}<br />` +
-          `Mana cost: ${matchedCard.manaCost || 'N/A'}<br />` +
+          `Mana cost: ${matchedCard.manaCost || "N/A"}<br />` +
           `Text: ${matchedCard.text}`;
         updateSearchLinks(matchedCard.name);
-        setStatus('Uploaded image matched to the Spider-Man database.');
+        setStatus("Uploaded image matched to the Spider-Man database.");
       } else {
         cardNameElement.textContent = `Card name candidate: ${cardName}`;
         updateSearchLinks(cardName);
-        setStatus('Upload scan finished. Use the search links to verify the card details.');
+        setStatus("Upload scan finished. Use the search links to verify the card details.");
       }
     } else {
-      cardNameElement.textContent = 'Unable to identify a clear card name from the OCR output.';
-      updateSearchLinks('');
-      setStatus('Upload finished, but the card name was not confidently detected.');
+      cardNameElement.textContent = "Unable to identify a clear card name from the OCR output.";
+      updateSearchLinks("");
+      setStatus("Upload finished, but the card name was not confidently detected.");
     }
   };
+
   reader.readAsDataURL(file);
 }
 
