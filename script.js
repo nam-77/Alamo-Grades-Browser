@@ -139,6 +139,22 @@ async function recognizeCardImage(image) {
     return '';
   }
 }
+// --- NEW OCR FUNCTION (Tesseract v4.x) ---
+async function runOCR(file) {
+  console.log("Starting OCR…");
+
+  const worker = await Tesseract.createWorker("eng");
+  const { data: { text } } = await worker.recognize(file);
+
+  console.log("OCR Result:");
+  console.log(text);
+
+  const output = document.getElementById("ocr-result");
+  if (output) output.textContent = text;
+
+  return text;
+}
+
 
 function getCaptureRegion() {
   const videoRect = video.getBoundingClientRect();
@@ -239,7 +255,7 @@ async function handleUpload(event) {
   const reader = new FileReader();
   reader.onload = async () => {
     setStatus('Recognizing text from uploaded image...');
-    const text = await recognizeCardImage(reader.result);
+    const text = await runOCR(reader.result);
     if (!text) {
       ocrResult.textContent = 'No text detected in the uploaded image.';
       cardNameElement.textContent = '';
