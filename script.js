@@ -139,41 +139,18 @@ async function recognizeCardImage(image) {
     return '';
   }
 }
-// --- FINAL OCR FUNCTION (validated image load) ---
+// --- Modern Tesseract v5 OCR function ---
 async function runOCR(file) {
   console.log("Starting OCR…");
 
-  const worker = await Tesseract.createWorker("eng");
+  const { data: { text } } = await Tesseract.recognize(file, "eng", {
+    logger: (m) => {
+      if (m.status === "recognizing text") {
+        console.log(`OCR progress: ${Math.round(m.progress * 100)}%`);
+      }
+    },
+  });
 
-  let imageSource;
-
-  if (typeof file === "string" && file.startsWith("data:image")) {
-    imageSource = new Image();
-    imageSource.src = file;
-
-    // Wait for image to fully load
-    await new Promise((resolve, reject) => {
-      imageSource.onload = () => {
-        console.log("Image loaded successfully.");
-        resolve();
-      };
-      imageSource.onerror = (err) => {
-        console.error("Image failed to load:", err);
-        reject(err);
-      };
-    });
-  } else if (file instanceof Blob) {
-    imageSource = URL.createObjectURL(file);
-  } else {
-    throw new Error("Unsupported file type for OCR.");
-  }
-
-  // Validate image dimensions before recognition
-  if (!imageSource.width && !imageSource.height) {
-    throw new Error("Image not loaded or invalid.");
-  }
-
-  const { data: { text } } = await worker.recognize(imageSource);
   console.log("OCR Result:");
   console.log(text);
 
@@ -182,7 +159,6 @@ async function runOCR(file) {
 
   return text;
 }
-
 
 function getCaptureRegion() {
   const videoRect = video.getBoundingClientRect();
