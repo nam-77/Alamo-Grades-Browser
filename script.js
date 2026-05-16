@@ -144,8 +144,12 @@ async function runOCR(file) {
   console.log("Starting OCR…");
 
   const worker = await Tesseract.createWorker("eng");
-  const { data: { text } } = await worker.recognize(file);
 
+// Create an image element from the base64 string
+  const img = new Image();
+  img.src = file;
+  
+  const { data: { text } } = await worker.recognize(file);
   console.log("OCR Result:");
   console.log(text);
 
