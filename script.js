@@ -236,6 +236,100 @@ function stopCamera() {
   setStatus('Camera stopped. You can upload an image or start the camera again.');
 }
 
+// ------------------------------
+// 1. IMPROVED CAMERA FOCUS
+// ------------------------------
+async function startCamera() {
+  const constraints = {
+    video: {
+      facingMode: "environment",
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      focusMode: "continuous",
+      advanced: [
+        { focusMode: "continuous" },
+        { exposureMode: "continuous" },
+        { whiteBalanceMode: "continuous" }
+      ]
+    }
+  };
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById("video");
+    video.srcObject = stream;
+    await video.play();
+  } catch (err) {
+    console.error("Camera error:", err);
+  }
+}
+
+// ------------------------------
+// 2. IMAGE PREPROCESSING
+// ------------------------------
+function preprocessImage(canvas) {
+  const ctx = canvas.getContext("2d");
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+
+    // Boost contrast
+    const contrast = 1.4;
+    const newVal = (avg - 128) * contrast + 128;
+
+    // Sharpen edges
+    const sharpened = Math.min(255, Math.max(0, newVal));
+
+    data[i] = data[i+1] = data[i+2] = sharpened;
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// ------------------------------
+// 3. OCR WITH BETTER SETTINGS
+// ------------------------------
+async function runOCR(canvas) {
+  preprocessImage(canvas);
+
+  const result = await Tesseract.recognize(canvas, "eng", {
+    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ",
+    tessedit_pageseg_mode: 6,
+    tessedit_ocr_engine_mode: 1
+  });
+
+  return result.data.text.trim();
+}
+
+// ------------------------------
+// CAPTURE + OCR WORKFLOW
+// ------------------------------
+async function captureAndScan() {
+  const video = document.getElementById("video");
+  const canvas = document.createElement("canvas");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const text = await runOCR(canvas);
+  console.log("OCR Result:", text);
+
+  if (!text) {
+    alert("OCR failed. Try better lighting or hold the phone steady.");
+  } else {
+    alert("Detected: " + text);
+  }
+}
+
+// Start camera on load
+startCamera();
+
+
 async function startCamera() {
   if (stream) {
     return;
